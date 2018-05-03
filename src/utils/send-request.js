@@ -172,6 +172,16 @@ function requestAPI (config, options, callback) {
     req.end()
   }
 
+  if (options.timeout) {
+    req.on('socket', (socket) => {
+      socket.setTimeout(options.timeout)
+      socket.on('timeout', () => {
+        req.abort()
+        callback(new Error('IPFS request timed out'))
+      })
+    })
+  }
+
   return req
 }
 

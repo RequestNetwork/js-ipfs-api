@@ -25,7 +25,7 @@ module.exports = (send) => {
       length: opts.length
     }
 
-    send({ path: 'cat', args: hash, buffer: opts.buffer, qs: query }, (err, stream) => {
+    send({ path: 'cat', args: hash, buffer: opts.buffer, qs: query, timeout: opts.timeout}, (err, stream) => {
       if (err) { return callback(err) }
 
       stream.pipe(bl((err, data) => {
