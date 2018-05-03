@@ -89,8 +89,6 @@
     "stream-equal": "^1.1.1"
   },
   "pre-commit": [
-    // "lint",
-    // "test"
   ],
   "keywords": [
     "ipfs"
