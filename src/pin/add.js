@@ -11,8 +11,7 @@ module.exports = (send) => {
     send({
       path: 'pin/add',
       args: hash,
-      qs: opts,
-      timeout: opts.timeout
+      qs: opts
     }, (err, res) => {
       if (err) {
         return callback(err)
