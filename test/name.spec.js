@@ -24,7 +24,7 @@ describe('.name', () => {
   let testFileCid
 
   before(function (done) {
-    this.timeout(20 * 1000)
+    this.timeout(30 * 1000)
 
     series([
       (cb) => {
@@ -44,26 +44,38 @@ describe('.name', () => {
         })
       },
       (cb) => {
-        ipfsd.api.id((err, id) => {
-          expect(err).to.not.exist()
-          const ma = id.addresses[0]
-          other.swarm.connect(ma, cb)
-        })
-      },
-      (cb) => {
-        ipfs.files.add(testfile, (err, res) => {
-          expect(err).to.not.exist()
-          testFileCid = res[0].hash
-          cb()
-        })
+        parallel([
+          (cb) => {
+            ipfs.id((err, id) => {
+              expect(err).to.not.exist()
+              const ma = id.addresses[0]
+              other.swarm.connect(ma, cb)
+            })
+          },
+          (cb) => {
+            ipfs.files.add(testfile, (err, res) => {
+              expect(err).to.not.exist()
+              testFileCid = res[0].hash
+              cb()
+            })
+          }
+        ], cb)
       }
     ], done)
   })
 
-  after((done) => {
+  after(function (done) {
+    this.timeout(10 * 1000)
+
     parallel([
-      (cb) => ipfsd.stop(cb),
-      (cb) => otherd.stop(cb)
+      (cb) => {
+        if (!ipfsd) return cb()
+        ipfsd.stop(cb)
+      },
+      (cb) => {
+        if (!otherd) return cb()
+        otherd.stop(cb)
+      }
     ], done)
   })
 
