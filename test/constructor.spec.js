@@ -35,7 +35,10 @@ describe('ipfs-api constructor tests', () => {
       })
     })
 
-    after((done) => ipfsd.stop(done))
+    after((done) => {
+      if (!ipfsd) return done()
+      ipfsd.stop(done)
+    })
 
     it('opts', (done) => {
       const splitted = apiAddr.split('/')
@@ -54,6 +57,16 @@ describe('ipfs-api constructor tests', () => {
       const splitted = apiAddr.split('/')
 
       clientWorks(ipfsAPI(splitted[2], splitted[4]), done)
+    })
+
+    it('specify host, port and api path', (done) => {
+      const splitted = apiAddr.split('/')
+
+      clientWorks(ipfsAPI({
+        host: splitted[2],
+        port: splitted[4],
+        'api-path': '/api/v0/'
+      }), done)
     })
 
     it('host, port, opts', (done) => {

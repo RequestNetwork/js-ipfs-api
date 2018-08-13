@@ -9,6 +9,7 @@ const once = require('once')
 const streamToValue = require('./stream-to-value')
 const streamToJsonValue = require('./stream-to-json-value')
 const request = require('./request')
+const log = require('debug')('ipfs-api:request')
 
 // -- Internal
 
@@ -23,6 +24,7 @@ function parseError (res, cb) {
     if (payload) {
       error.code = payload.Code
       error.message = payload.Message || payload.toString()
+      error.type = payload.Type
     }
     cb(error)
   })
@@ -34,6 +36,12 @@ function onRes (buffer, cb) {
     const chunkedObjects = Boolean(res.headers['x-chunked-output'])
     const isJson = res.headers['content-type'] &&
                    res.headers['content-type'].indexOf('application/json') === 0
+
+    if (res.req) {
+      log(res.req.method, `${res.req.getHeaders().host}${res.req.path}`, res.statusCode, res.statusMessage)
+    } else {
+      log(res.url, res.statusCode, res.statusMessage)
+    }
 
     if (res.statusCode >= 400 || !res.statusCode) {
       return parseError(res, cb)
@@ -106,7 +114,7 @@ function requestAPI (config, options, callback) {
   delete options.qs.followSymlinks
 
   const method = 'POST'
-  const headers = {}
+  const headers = Object.assign({}, config.headers)
 
   if (isNode) {
     // Browsers do not allow you to modify the user agent
@@ -162,6 +170,7 @@ function requestAPI (config, options, callback) {
     headers: headers,
     protocol: `${config.protocol}:`
   }
+
   const req = request(config.protocol)(reqOptions, onRes(options.buffer, callback))
 
   req.on('error', (err) => {

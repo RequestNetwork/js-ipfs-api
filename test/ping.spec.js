@@ -12,9 +12,17 @@ const parallel = require('async/parallel')
 const series = require('async/series')
 
 const IPFSApi = require('../src')
+const PingMessageStream = require('../src/utils/ping-message-stream')
 const f = require('./utils/factory')
 
+// Determine if a ping response object is a pong, or something else, like a status message
+function isPong (pingResponse) {
+  return Boolean(pingResponse && pingResponse.success && !pingResponse.text)
+}
+
 describe('.ping', function () {
+  this.timeout(10 * 1000)
+
   let ipfs
   let ipfsd
   let other
@@ -22,7 +30,7 @@ describe('.ping', function () {
   let otherId
 
   before(function (done) {
-    this.timeout(20 * 1000) // slow CI
+    this.timeout(30 * 1000) // slow CI
 
     series([
       (cb) => {
@@ -42,26 +50,36 @@ describe('.ping', function () {
         })
       },
       (cb) => {
-        ipfsd.api.id((err, id) => {
-          expect(err).to.not.exist()
-          const ma = id.addresses[0]
-          other.swarm.connect(ma, cb)
-        })
-      },
-      (cb) => {
-        other.id((err, id) => {
-          expect(err).to.not.exist()
-          otherId = id.id
-          cb()
-        })
+        parallel([
+          (cb) => {
+            ipfs.id((err, id) => {
+              expect(err).to.not.exist()
+              const ma = id.addresses[0]
+              other.swarm.connect(ma, cb)
+            })
+          },
+          (cb) => {
+            other.id((err, id) => {
+              expect(err).to.not.exist()
+              otherId = id.id
+              cb()
+            })
+          }
+        ], cb)
       }
     ], done)
   })
 
   after((done) => {
     parallel([
-      (cb) => ipfsd.stop(cb),
-      (cb) => otherd.stop(cb)
+      (cb) => {
+        if (!ipfsd) return cb()
+        ipfsd.stop(cb)
+      },
+      (cb) => {
+        if (!otherd) return cb()
+        otherd.stop(cb)
+      }
     ], done)
   })
 
@@ -69,12 +87,12 @@ describe('.ping', function () {
     ipfs.ping(otherId, (err, res) => {
       expect(err).to.not.exist()
       expect(res).to.be.an('array')
-      expect(res).to.have.lengthOf(3)
+      expect(res.filter(isPong)).to.have.lengthOf(1)
       res.forEach(packet => {
-        expect(packet).to.have.keys('Success', 'Time', 'Text')
-        expect(packet.Time).to.be.a('number')
+        expect(packet).to.have.keys('success', 'time', 'text')
+        expect(packet.time).to.be.a('number')
       })
-      const resultMsg = res.find(packet => packet.Text.includes('Average latency'))
+      const resultMsg = res.find(packet => packet.text.includes('Average latency'))
       expect(resultMsg).to.exist()
       done()
     })
@@ -84,12 +102,12 @@ describe('.ping', function () {
     ipfs.ping(otherId, { count: 2 }, (err, res) => {
       expect(err).to.not.exist()
       expect(res).to.be.an('array')
-      expect(res).to.have.lengthOf(4)
+      expect(res.filter(isPong)).to.have.lengthOf(2)
       res.forEach(packet => {
-        expect(packet).to.have.keys('Success', 'Time', 'Text')
-        expect(packet.Time).to.be.a('number')
+        expect(packet).to.have.keys('success', 'time', 'text')
+        expect(packet.time).to.be.a('number')
       })
-      const resultMsg = res.find(packet => packet.Text.includes('Average latency'))
+      const resultMsg = res.find(packet => packet.text.includes('Average latency'))
       expect(resultMsg).to.exist()
       done()
     })
@@ -99,12 +117,12 @@ describe('.ping', function () {
     ipfs.ping(otherId, { n: 2 }, (err, res) => {
       expect(err).to.not.exist()
       expect(res).to.be.an('array')
-      expect(res).to.have.lengthOf(4)
+      expect(res.filter(isPong)).to.have.lengthOf(2)
       res.forEach(packet => {
-        expect(packet).to.have.keys('Success', 'Time', 'Text')
-        expect(packet.Time).to.be.a('number')
+        expect(packet).to.have.keys('success', 'time', 'text')
+        expect(packet.time).to.be.a('number')
       })
-      const resultMsg = res.find(packet => packet.Text.includes('Average latency'))
+      const resultMsg = res.find(packet => packet.text.includes('Average latency'))
       expect(resultMsg).to.exist()
       done()
     })
@@ -123,12 +141,12 @@ describe('.ping', function () {
     return ipfs.ping(otherId)
       .then((res) => {
         expect(res).to.be.an('array')
-        expect(res).to.have.lengthOf(3)
+        expect(res.filter(isPong)).to.have.lengthOf(1)
         res.forEach(packet => {
-          expect(packet).to.have.keys('Success', 'Time', 'Text')
-          expect(packet.Time).to.be.a('number')
+          expect(packet).to.have.keys('success', 'time', 'text')
+          expect(packet.time).to.be.a('number')
         })
-        const resultMsg = res.find(packet => packet.Text.includes('Average latency'))
+        const resultMsg = res.find(packet => packet.text.includes('Average latency'))
         expect(resultMsg).to.exist()
       })
   })
@@ -139,12 +157,12 @@ describe('.ping', function () {
       collect((err, data) => {
         expect(err).to.not.exist()
         expect(data).to.be.an('array')
-        expect(data).to.have.lengthOf(3)
+        expect(data.filter(isPong)).to.have.lengthOf(1)
         data.forEach(packet => {
-          expect(packet).to.have.keys('Success', 'Time', 'Text')
-          expect(packet.Time).to.be.a('number')
+          expect(packet).to.have.keys('success', 'time', 'text')
+          expect(packet.time).to.be.a('number')
         })
-        const resultMsg = data.find(packet => packet.Text.includes('Average latency'))
+        const resultMsg = data.find(packet => packet.text.includes('Average latency'))
         expect(resultMsg).to.exist()
         done()
       })
@@ -156,15 +174,22 @@ describe('.ping', function () {
     ipfs.pingReadableStream(otherId)
       .on('data', data => {
         expect(data).to.be.an('object')
-        expect(data).to.have.keys('Success', 'Time', 'Text')
-        packetNum++
+        expect(data).to.have.keys('success', 'time', 'text')
+        if (isPong(data)) packetNum++
       })
       .on('error', err => {
         expect(err).not.to.exist()
       })
       .on('end', () => {
-        expect(packetNum).to.be.above(2)
+        expect(packetNum).to.equal(1)
         done()
       })
+  })
+
+  it('message conversion fails if invalid message is received', () => {
+    const messageConverter = new PingMessageStream()
+    expect(() => {
+      messageConverter.write({some: 'InvalidMessage'})
+    }).to.throw('Invalid ping message received')
   })
 })

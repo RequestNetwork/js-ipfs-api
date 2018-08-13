@@ -1,3 +1,174 @@
+<a name="23.0.0"></a>
+# [23.0.0](https://github.com/ipfs/js-ipfs-api/compare/v22.3.0...v23.0.0) (2018-08-06)
+
+
+### Bug Fixes
+
+* config get ([#825](https://github.com/ipfs/js-ipfs-api/issues/825)) ([ef5a4a3](https://github.com/ipfs/js-ipfs-api/commit/ef5a4a3))
+
+
+### Features
+
+* add resolve cmd ([#826](https://github.com/ipfs/js-ipfs-api/issues/826)) ([c7ad0e4](https://github.com/ipfs/js-ipfs-api/commit/c7ad0e4))
+
+
+
+<a name="22.3.0"></a>
+# [22.3.0](https://github.com/ipfs/js-ipfs-api/compare/v22.2.4...v22.3.0) (2018-08-02)
+
+
+### Bug Fixes
+
+* config.set rejects buffer values ([#800](https://github.com/ipfs/js-ipfs-api/issues/800)) ([f3e6bf1](https://github.com/ipfs/js-ipfs-api/commit/f3e6bf1))
+
+
+### Features
+
+* compatible with go-ipfs 0.4.16 ([8536ee4](https://github.com/ipfs/js-ipfs-api/commit/8536ee4))
+* expose mfs files.read*Stream methods ([#823](https://github.com/ipfs/js-ipfs-api/issues/823)) ([70c9df1](https://github.com/ipfs/js-ipfs-api/commit/70c9df1))
+
+
+
+<a name="22.2.4"></a>
+## [22.2.4](https://github.com/ipfs/js-ipfs-api/compare/v22.2.3...v22.2.4) (2018-07-17)
+
+
+### Bug Fixes
+
+* increase browserNoActivityTimeout to account for before ([328e338](https://github.com/ipfs/js-ipfs-api/commit/328e338))
+* increase timeout for .name after all ([3dc4313](https://github.com/ipfs/js-ipfs-api/commit/3dc4313))
+* missing debug dependency fixes [#809](https://github.com/ipfs/js-ipfs-api/issues/809) ([#810](https://github.com/ipfs/js-ipfs-api/issues/810)) ([0f1fe95](https://github.com/ipfs/js-ipfs-api/commit/0f1fe95))
+
+
+
+<a name="22.2.3"></a>
+## [22.2.3](https://github.com/ipfs/js-ipfs-api/compare/v22.2.2...v22.2.3) (2018-07-10)
+
+
+### Bug Fixes
+
+* Request logging broken in Electron ([#808](https://github.com/ipfs/js-ipfs-api/issues/808)) ([52298ae](https://github.com/ipfs/js-ipfs-api/commit/52298ae))
+
+
+
+<a name="22.2.2"></a>
+## [22.2.2](https://github.com/ipfs/js-ipfs-api/compare/v22.2.1...v22.2.2) (2018-07-05)
+
+
+### Bug Fixes
+
+* ignore response body for some mfs commands ([#805](https://github.com/ipfs/js-ipfs-api/issues/805)) ([b604a64](https://github.com/ipfs/js-ipfs-api/commit/b604a64))
+
+
+### Features
+
+* modular interface tests ([#785](https://github.com/ipfs/js-ipfs-api/issues/785)) ([2426072](https://github.com/ipfs/js-ipfs-api/commit/2426072)), closes [#339](https://github.com/ipfs/js-ipfs-api/issues/339) [#802](https://github.com/ipfs/js-ipfs-api/issues/802) [#801](https://github.com/ipfs/js-ipfs-api/issues/801)
+
+
+
+<a name="22.2.1"></a>
+## [22.2.1](https://github.com/ipfs/js-ipfs-api/compare/v22.2.0...v22.2.1) (2018-06-29)
+
+
+### Bug Fixes
+
+* res.req only in Node.js, in browser use res.url instead ([#798](https://github.com/ipfs/js-ipfs-api/issues/798)) ([e8a5ab9](https://github.com/ipfs/js-ipfs-api/commit/e8a5ab9))
+
+
+
+<a name="22.2.0"></a>
+# [22.2.0](https://github.com/ipfs/js-ipfs-api/compare/v22.1.1...v22.2.0) (2018-06-29)
+
+
+### Features
+
+* logs path & querystring for requests ([#796](https://github.com/ipfs/js-ipfs-api/issues/796)) ([4e55d19](https://github.com/ipfs/js-ipfs-api/commit/4e55d19))
+
+
+
+<a name="22.1.1"></a>
+## [22.1.1](https://github.com/ipfs/js-ipfs-api/compare/v22.1.0...v22.1.1) (2018-06-25)
+
+
+### Bug Fixes
+
+* get block with empty data ([#789](https://github.com/ipfs/js-ipfs-api/issues/789)) ([88edd83](https://github.com/ipfs/js-ipfs-api/commit/88edd83))
+
+
+
+<a name="22.1.0"></a>
+# [22.1.0](https://github.com/ipfs/js-ipfs-api/compare/v22.0.2...v22.1.0) (2018-06-18)
+
+
+### Features
+
+* add support for custom headers to send-request ([#741](https://github.com/ipfs/js-ipfs-api/issues/741)) ([7fb2e07](https://github.com/ipfs/js-ipfs-api/commit/7fb2e07))
+* implement bitswap wantlist peer ID param and bitswap unwant ([#761](https://github.com/ipfs/js-ipfs-api/issues/761)) ([73a153e](https://github.com/ipfs/js-ipfs-api/commit/73a153e))
+
+
+
+<a name="22.0.2"></a>
+## [22.0.2](https://github.com/ipfs/js-ipfs-api/compare/v22.0.1...v22.0.2) (2018-06-14)
+
+
+### Bug Fixes
+
+* json-loader error in upload-file-via-browser example ([#784](https://github.com/ipfs/js-ipfs-api/issues/784)) ([5e7b7c4](https://github.com/ipfs/js-ipfs-api/commit/5e7b7c4))
+
+
+
+<a name="22.0.1"></a>
+## [22.0.1](https://github.com/ipfs/js-ipfs-api/compare/v22.0.0...v22.0.1) (2018-05-30)
+
+
+### Bug Fixes
+
+* configure webpack to not use esmodules in dependencies ([dc14333](https://github.com/ipfs/js-ipfs-api/commit/dc14333))
+* correctly differentiate pong responses ([4ad25a3](https://github.com/ipfs/js-ipfs-api/commit/4ad25a3))
+* util.addFromURL with URL-escaped file ([a3bd811](https://github.com/ipfs/js-ipfs-api/commit/a3bd811))
+
+
+
+<a name="22.0.0"></a>
+# [22.0.0](https://github.com/ipfs/js-ipfs-api/compare/v21.0.0...v22.0.0) (2018-05-20)
+
+
+### Bug Fixes
+
+* callback from unsub after stream ends ([51a80f2](https://github.com/ipfs/js-ipfs-api/commit/51a80f2))
+* do not fail stop node if failed start node ([533760f](https://github.com/ipfs/js-ipfs-api/commit/533760f))
+* **ping:** convert the ping messages to lowercase ([632af40](https://github.com/ipfs/js-ipfs-api/commit/632af40))
+* more robust ping tests ([fc6d301](https://github.com/ipfs/js-ipfs-api/commit/fc6d301))
+* remove .only ([0e21c8a](https://github.com/ipfs/js-ipfs-api/commit/0e21c8a))
+* result.Peers can be null, ensure callback is called ([f5f2e83](https://github.com/ipfs/js-ipfs-api/commit/f5f2e83))
+* update asserted error message ([17c1f1c](https://github.com/ipfs/js-ipfs-api/commit/17c1f1c))
+* use async/setImmediate vs process.nextTick ([faa51b4](https://github.com/ipfs/js-ipfs-api/commit/faa51b4))
+
+
+
+<a name="21.0.0"></a>
+# [21.0.0](https://github.com/ipfs/js-ipfs-api/compare/v20.2.1...v21.0.0) (2018-05-12)
+
+
+### Bug Fixes
+
+* make pubsub.unsubscribe async and alter pubsub.subscribe signature ([b98f8f3](https://github.com/ipfs/js-ipfs-api/commit/b98f8f3))
+
+
+### BREAKING CHANGES
+
+* pubsub.unsubscribe is now async and argument order for pubsub.subscribe has changed
+
+License: MIT
+Signed-off-by: Alan Shaw <alan@tableflip.io>
+
+
+
+<a name="20.2.1"></a>
+## [20.2.1](https://github.com/ipfs/js-ipfs-api/compare/v20.2.0...v20.2.1) (2018-05-06)
+
+
+
 <a name="20.2.0"></a>
 # [20.2.0](https://github.com/ipfs/js-ipfs-api/compare/v20.0.1...v20.2.0) (2018-04-30)
 

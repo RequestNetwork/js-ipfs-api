@@ -1,8 +1,8 @@
 'use strict'
 
-const Stream = require('readable-stream')
 const pump = require('pump')
 const moduleConfig = require('./utils/module-config')
+const PingMessageStream = require('./utils/ping-message-stream')
 
 module.exports = (arg) => {
   const send = moduleConfig(arg)
@@ -17,17 +17,14 @@ module.exports = (arg) => {
       args: id,
       qs: opts
     }
-    // ndjson streams objects
-    const pt = new Stream.PassThrough({
-      objectMode: true
-    })
+
+    const response = new PingMessageStream()
 
     send(request, (err, stream) => {
-      if (err) { return pt.destroy(err) }
-
-      pump(stream, pt)
+      if (err) { return response.emit('error', err) }
+      pump(stream, response)
     })
 
-    return pt
+    return response
   }
 }

@@ -1,7 +1,10 @@
-
 'use strict'
 
 const promisify = require('promisify-es6')
+
+const transform = function (res, callback) {
+  callback(null, res.Path)
+}
 
 module.exports = (send) => {
   return promisify((args, opts, callback) => {
@@ -9,10 +12,11 @@ module.exports = (send) => {
       callback = opts
       opts = {}
     }
-    send({
-      path: 'files/mkdir',
+
+    send.andTransform({
+      path: 'resolve',
       args: args,
       qs: opts
-    }, (error) => callback(error))
+    }, transform, callback)
   })
 }
