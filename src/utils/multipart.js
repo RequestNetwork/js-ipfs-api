@@ -1,9 +1,7 @@
 'use strict'
 
-const Transform = require('stream').Transform
+const Transform = require('readable-stream').Transform
 const isNode = require('detect-node')
-const isSource = require('is-pull-stream').isSource
-const toStream = require('pull-stream-to-stream')
 
 const PADDING = '--'
 const NEW_LINE = '\r\n'
@@ -69,7 +67,7 @@ class Multipart extends Transform {
 
     this.push(leading)
 
-    let content = file.content || Buffer.alloc(0)
+    const content = file.content || Buffer.alloc(0)
 
     if (Buffer.isBuffer(content)) {
       this.push(content)
@@ -77,12 +75,7 @@ class Multipart extends Transform {
       return callback() // early
     }
 
-    if (isSource(content)) {
-      content = toStream.source(content)
-    }
-
     // From now on we assume content is a stream
-
     content.once('error', this.emit.bind(this, 'error'))
 
     content.once('end', () => {

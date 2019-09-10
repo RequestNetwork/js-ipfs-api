@@ -6,15 +6,33 @@ const isNode = require('detect-node')
 const ndjson = require('ndjson')
 const pump = require('pump')
 const once = require('once')
+const { getRequest } = require('iso-stream-http')
 const streamToValue = require('./stream-to-value')
 const streamToJsonValue = require('./stream-to-json-value')
-const request = require('./request')
-const log = require('debug')('ipfs-api:request')
+const log = require('debug')('ipfs-http-client:request')
 
 // -- Internal
 
+function hasJSONHeaders (res) {
+  return res.headers['content-type'] &&
+    res.headers['content-type'].indexOf('application/json') === 0
+}
+
 function parseError (res, cb) {
   const error = new Error(`Server responded with ${res.statusCode}`)
+  error.statusCode = res.statusCode
+
+  if (!hasJSONHeaders(res)) {
+    return streamToValue(res, (err, data) => { // eslint-disable-line handle-callback-err
+      // the `err` here refers to errors in stream processing, which
+      // we ignore here, since we already have a valid `error` response
+      // from the server above that we have to report to the caller.
+      if (data && data.length) {
+        error.message = data.toString()
+      }
+      cb(error)
+    })
+  }
 
   streamToJsonValue(res, (err, payload) => {
     if (err) {
@@ -34,8 +52,7 @@ function onRes (buffer, cb) {
   return (res) => {
     const stream = Boolean(res.headers['x-stream-output'])
     const chunkedObjects = Boolean(res.headers['x-chunked-output'])
-    const isJson = res.headers['content-type'] &&
-                   res.headers['content-type'].indexOf('application/json') === 0
+    const isJson = hasJSONHeaders(res)
 
     if (res.req) {
       log(res.req.method, `${res.req.getHeaders().host}${res.req.path}`, res.statusCode, res.statusMessage)
@@ -171,7 +188,7 @@ function requestAPI (config, options, callback) {
     protocol: `${config.protocol}:`
   }
 
-  const req = request(config.protocol)(reqOptions, onRes(options.buffer, callback))
+  const req = getRequest(reqOptions, onRes(options.buffer, callback))
 
   req.on('error', (err) => {
     callback(err)

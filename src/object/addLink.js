@@ -1,12 +1,10 @@
 'use strict'
 
 const promisify = require('promisify-es6')
-const cleanMultihash = require('../utils/clean-multihash')
+const CID = require('cids')
 
 module.exports = (send) => {
-  const objectGet = require('./get')(send)
-
-  return promisify((multihash, dLink, opts, callback) => {
+  return promisify((cid, dLink, opts, callback) => {
     if (typeof opts === 'function') {
       callback = opts
       opts = {}
@@ -16,23 +14,22 @@ module.exports = (send) => {
     }
 
     try {
-      multihash = cleanMultihash(multihash, opts)
+      cid = new CID(cid)
     } catch (err) {
       return callback(err)
     }
 
-    send({
-      path: 'object/patch/add-link',
-      args: [
-        multihash,
-        dLink.name,
-        cleanMultihash(dLink.multihash)
-      ]
-    }, (err, result) => {
+    const args = [
+      cid.toString(),
+      dLink.Name || dLink.name || null,
+      (dLink.Hash || dLink.cid || '').toString() || null
+    ]
+
+    send({ path: 'object/patch/add-link', args }, (err, result) => {
       if (err) {
         return callback(err)
       }
-      objectGet(result.Hash, { enc: 'base58' }, callback)
+      callback(null, new CID(result.Hash))
     })
   })
 }

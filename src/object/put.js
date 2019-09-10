@@ -1,14 +1,9 @@
 'use strict'
 
 const promisify = require('promisify-es6')
-const dagPB = require('ipld-dag-pb')
-const DAGNode = dagPB.DAGNode
-const LRU = require('lru-cache')
-const lruOptions = {
-  max: 128
-}
+const CID = require('cids')
+const { DAGNode } = require('ipld-dag-pb')
 
-const cache = LRU(lruOptions)
 const SendOneFile = require('../utils/send-one-file')
 const once = require('once')
 
@@ -39,14 +34,14 @@ module.exports = (send) => {
           Links: []
         }
       }
-    } else if (obj.multihash) {
+    } else if (DAGNode.isDAGNode(obj)) {
       tmpObj = {
-        Data: obj.data.toString(),
-        Links: obj.links.map((l) => {
-          const link = l.toJSON()
-          link.hash = link.multihash
-          return link
-        })
+        Data: obj.Data.toString(),
+        Links: obj.Links.map(l => ({
+          Name: l.Name,
+          Hash: l.Hash.toString(),
+          Size: l.Tsize
+        }))
       }
     } else if (typeof obj === 'object') {
       tmpObj.Data = obj.Data.toString()
@@ -72,49 +67,7 @@ module.exports = (send) => {
         return callback(err) // early
       }
 
-      if (Buffer.isBuffer(obj)) {
-        if (!options.enc) {
-          obj = { Data: obj, Links: [] }
-        } else if (options.enc === 'json') {
-          obj = JSON.parse(obj.toString())
-        }
-      }
-
-      let node
-
-      if (obj.multihash) {
-        node = obj
-      } else if (options.enc === 'protobuf') {
-        dagPB.util.deserialize(obj, (err, _node) => {
-          if (err) {
-            return callback(err)
-          }
-          node = _node
-          next()
-        })
-        return
-      } else {
-        DAGNode.create(Buffer.from(obj.Data), obj.Links, (err, _node) => {
-          if (err) {
-            return callback(err)
-          }
-          node = _node
-          next()
-        })
-        return
-      }
-      next()
-
-      function next () {
-        const nodeJSON = node.toJSON()
-        if (nodeJSON.multihash !== result.Hash) {
-          const err = new Error('multihashes do not match')
-          return callback(err)
-        }
-
-        cache.set(result.Hash, node)
-        callback(null, node)
-      }
+      callback(null, new CID(result.Hash))
     })
   })
 }

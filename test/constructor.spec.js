@@ -1,78 +1,144 @@
-/* eslint-env mocha */
+/* eslint-env mocha, browser */
 'use strict'
 
+const multiaddr = require('multiaddr')
 const chai = require('chai')
 const dirtyChai = require('dirty-chai')
 const expect = chai.expect
 chai.use(dirtyChai)
 
 const f = require('./utils/factory')
-const ipfsAPI = require('../src/index.js')
+const ipfsClient = require('../src/index.js')
 
-function clientWorks (client, done) {
-  client.id((err, id) => {
-    expect(err).to.not.exist()
-
-    expect(id).to.have.a.property('id')
-    expect(id).to.have.a.property('publicKey')
-    done()
-  })
-}
-
-describe('ipfs-api constructor tests', () => {
+describe('ipfs-http-client constructor tests', () => {
   describe('parameter permuations', () => {
+    it('none', () => {
+      const ipfs = ipfsClient()
+      if (typeof self !== 'undefined') {
+        const { hostname, port } = self.location
+        expectConfig(ipfs, { host: hostname, port })
+      } else {
+        expectConfig(ipfs, {})
+      }
+    })
+
+    it('opts', () => {
+      const host = 'wizard.world'
+      const port = '999'
+      const protocol = 'https'
+      const ipfs = ipfsClient({ host, port, protocol })
+      expectConfig(ipfs, { host, port, protocol })
+    })
+
+    it('multiaddr dns4 string (implicit http)', () => {
+      const host = 'foo.com'
+      const port = '1001'
+      const protocol = 'http' // default to http if not specified in multiaddr
+      const addr = `/dns4/${host}/tcp/${port}`
+      const ipfs = ipfsClient(addr)
+      expectConfig(ipfs, { host, port, protocol })
+    })
+
+    it('multiaddr dns4 string (explicit https)', () => {
+      const host = 'foo.com'
+      const port = '1001'
+      const protocol = 'https'
+      const addr = `/dns4/${host}/tcp/${port}/${protocol}`
+      const ipfs = ipfsClient(addr)
+      expectConfig(ipfs, { host, port, protocol })
+    })
+
+    it('multiaddr dns4 string, explicit https in opts', () => {
+      const host = 'foo.com'
+      const port = '1001'
+      const protocol = 'https'
+      const addr = `/dns4/${host}/tcp/${port}`
+      const ipfs = ipfsClient(addr, { protocol })
+      expectConfig(ipfs, { host, port, protocol })
+    })
+
+    it('multiaddr ipv4 string (implicit http)', () => {
+      const host = '101.101.101.101'
+      const port = '1001'
+      const protocol = 'http'
+      const addr = `/ip4/${host}/tcp/${port}`
+      const ipfs = ipfsClient(addr)
+      expectConfig(ipfs, { host, port, protocol })
+    })
+
+    it('multiaddr ipv4 string (explicit https)', () => {
+      const host = '101.101.101.101'
+      const port = '1001'
+      const protocol = 'https'
+      const addr = `/ip4/${host}/tcp/${port}/${protocol}`
+      const ipfs = ipfsClient(addr)
+      expectConfig(ipfs, { host, port, protocol })
+    })
+
+    it('multiaddr instance', () => {
+      const host = 'ace.place'
+      const port = '1001'
+      const addr = multiaddr(`/dns4/${host}/tcp/${port}`)
+      const ipfs = ipfsClient(addr)
+      expectConfig(ipfs, { host, port })
+    })
+
+    it('host and port strings', () => {
+      const host = '1.1.1.1'
+      const port = '9999'
+      const ipfs = ipfsClient(host, port)
+      expectConfig(ipfs, { host, port })
+    })
+
+    it('host, port and api path', () => {
+      const host = '10.100.100.255'
+      const port = '9999'
+      const apiPath = '/future/api/v1/'
+      const ipfs = ipfsClient(host, port, { 'api-path': apiPath })
+      expectConfig(ipfs, { host, port, apiPath })
+    })
+
+    it('throws on invalid multiaddr', () => {
+      expect(() => ipfsClient('/dns4')).to.throw('invalid address')
+      expect(() => ipfsClient('/hello')).to.throw('no protocol with name')
+      expect(() => ipfsClient('/dns4/ipfs.io')).to.throw('multiaddr must have a valid format')
+    })
+  })
+
+  describe('integration', () => {
     let apiAddr
     let ipfsd
 
-    before(function (done) {
+    before(async function () {
       this.timeout(60 * 1000) // slow CI
 
-      f.spawn({ initOptions: { bits: 1024 } }, (err, node) => {
-        expect(err).to.not.exist()
-        ipfsd = node
-        apiAddr = node.apiAddr.toString()
-        done()
-      })
+      ipfsd = await f.spawn({ initOptions: { bits: 1024, profile: 'test' } })
+      apiAddr = ipfsd.apiAddr.toString()
     })
 
-    after((done) => {
-      if (!ipfsd) return done()
-      ipfsd.stop(done)
+    after(async () => {
+      if (ipfsd) {
+        await ipfsd.stop()
+      }
     })
 
-    it('opts', (done) => {
-      const splitted = apiAddr.split('/')
-      clientWorks(ipfsAPI({
-        host: splitted[2],
-        port: splitted[4],
-        protocol: 'http'
-      }), done)
-    })
-
-    it('mutliaddr, opts', (done) => {
-      clientWorks(ipfsAPI(apiAddr, { protocol: 'http' }), done)
-    })
-
-    it('host, port', (done) => {
-      const splitted = apiAddr.split('/')
-
-      clientWorks(ipfsAPI(splitted[2], splitted[4]), done)
-    })
-
-    it('specify host, port and api path', (done) => {
-      const splitted = apiAddr.split('/')
-
-      clientWorks(ipfsAPI({
-        host: splitted[2],
-        port: splitted[4],
-        'api-path': '/api/v0/'
-      }), done)
-    })
-
-    it('host, port, opts', (done) => {
-      const splitted = apiAddr.split('/')
-
-      clientWorks(ipfsAPI(splitted[2], splitted[4], { protocol: 'http' }), done)
+    it('can connect to an ipfs http api', async () => {
+      await clientWorks(ipfsClient(apiAddr))
     })
   })
 })
+
+async function clientWorks (client) {
+  const id = await client.id()
+
+  expect(id).to.have.a.property('id')
+  expect(id).to.have.a.property('publicKey')
+}
+
+function expectConfig (ipfs, { host, port, protocol, apiPath }) {
+  const conf = ipfs.getEndpointConfig()
+  expect(conf.host).to.be.oneOf([host, 'localhost', ''])
+  expect(conf.port).to.be.oneOf([port, '5001', 80])
+  expect(conf.protocol).to.equal(protocol || 'http')
+  expect(conf['api-path']).to.equal(apiPath || '/api/v0/')
+}

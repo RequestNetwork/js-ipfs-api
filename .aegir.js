@@ -5,6 +5,7 @@ const createServer = require('ipfsd-ctl').createServer
 const server = createServer()
 
 module.exports = {
+  bundlesize: { maxSize: '240kB' },
   webpack: {
     resolve: {
       mainFields: ['browser', 'main']
@@ -12,7 +13,7 @@ module.exports = {
   },
   karma: {
     files: [{
-      pattern: 'node_modules/interface-ipfs-core/js/test/fixtures/**/*',
+      pattern: 'node_modules/interface-ipfs-core/test/fixtures/**/*',
       watched: false,
       served: true,
       included: false
@@ -21,7 +22,9 @@ module.exports = {
     singleRun: true
   },
   hooks: {
-    pre: server.start.bind(server),
-    post: server.stop.bind(server)
+    browser: {
+      pre: () => server.start(),
+      post: () => server.stop()
+    }
   }
 }

@@ -1,17 +1,14 @@
 'use strict'
 
 const promisify = require('promisify-es6')
-const dagPB = require('ipld-dag-pb')
-const DAGNode = dagPB.DAGNode
-const DAGLink = dagPB.DAGLink
-const bs58 = require('bs58')
+const { DAGNode, DAGLink } = require('ipld-dag-pb')
 const CID = require('cids')
 const LRU = require('lru-cache')
 const lruOptions = {
   max: 128
 }
 
-const cache = LRU(lruOptions)
+const cache = new LRU(lruOptions)
 
 module.exports = (send) => {
   return promisify((cid, options, callback) => {
@@ -41,23 +38,20 @@ module.exports = (send) => {
 
     send({
       path: 'object/get',
-      args: cidB58Str
+      args: cidB58Str,
+      qs: {
+        'data-encoding': 'base64'
+      }
     }, (err, result) => {
       if (err) {
         return callback(err)
       }
 
-      const links = result.Links.map((l) => {
-        return new DAGLink(l.Name, l.Size, Buffer.from(bs58.decode(l.Hash)))
-      })
+      const links = result.Links.map(l => new DAGLink(l.Name, l.Size, l.Hash))
+      const node = DAGNode.create(Buffer.from(result.Data, 'base64'), links)
 
-      DAGNode.create(result.Data, links, (err, node) => {
-        if (err) {
-          return callback(err)
-        }
-        cache.set(cidB58Str, node)
-        callback(null, node)
-      })
+      cache.set(cidB58Str, node)
+      callback(null, node)
     })
   })
 }

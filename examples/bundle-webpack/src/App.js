@@ -1,8 +1,8 @@
 'use strict'
 const React = require('react')
-const ipfsAPI = require('ipfs-api')
+const ipfsClient = require('ipfs-http-client')
 
-const ipfs = ipfsAPI('localhost', '5001')
+const ipfs = ipfsClient('localhost', '5001')
 const stringToUse = 'hello world from webpacked IPFS'
 
 class App extends React.Component {
@@ -28,21 +28,15 @@ class App extends React.Component {
     ipfs.add([Buffer.from(stringToUse)], (err, res) => {
       if (err) throw err
       const hash = res[0].hash
-      this.setState({added_file_hash: hash})
-      ipfs.cat(hash, (err, res) => {
+      this.setState({ added_file_hash: hash })
+      ipfs.cat(hash, (err, data) => {
         if (err) throw err
-        let data = ''
-        res.on('data', (d) => {
-          data = data + d
-        })
-        res.on('end', () => {
-          this.setState({added_file_contents: data})
-        })
+        this.setState({ added_file_contents: data.toString() })
       })
     })
   }
   render () {
-    return <div style={{textAlign: 'center'}}>
+    return <div style={{ textAlign: 'center' }}>
       <h1>Everything is working!</h1>
       <p>Your ID is <strong>{this.state.id}</strong></p>
       <p>Your IPFS version is <strong>{this.state.version}</strong></p>

@@ -1,6 +1,6 @@
 'use strict'
 
-var IPFS = require('ipfs-api')
+var IPFS = require('ipfs-http-client')
 
 var ipfs = IPFS()
 
@@ -21,8 +21,7 @@ function store () {
 }
 
 function display (hash) {
-  // buffer: true results in the returned result being a buffer rather than a stream
-  ipfs.cat(hash, {buffer: true}, function (err, res) {
+  ipfs.cat(hash, function (err, res) {
     if (err || !res) {
       return console.error('ipfs cat error', err, res)
     }

@@ -1,7 +1,6 @@
 'use strict'
 
 const promisify = require('promisify-es6')
-const _ = require('lodash')
 
 module.exports = (send) => {
   return promisify((hash, opts, callback) => {
@@ -12,14 +11,12 @@ module.exports = (send) => {
     }
     if (typeof opts === 'function') {
       callback = opts
+      opts = null
     }
     if (hash && hash.type) {
       opts = hash
       hash = null
-    } else {
-      opts = null
     }
-
     send({
       path: 'pin/ls',
       args: hash,
@@ -28,7 +25,7 @@ module.exports = (send) => {
       if (err) {
         return callback(err)
       }
-      callback(null, _.keys(res.Keys).map(hash => (
+      callback(null, Object.keys(res.Keys).map(hash => (
         { hash, type: res.Keys[hash].Type }
       )))
     })

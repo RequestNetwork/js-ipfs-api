@@ -3,13 +3,13 @@
 
 const each = require('async/each')
 const IPFSFactory = require('ipfsd-ctl')
-const IPFSApi = require('../../src')
+const ipfsClient = require('../../src')
 
 function createFactory (options) {
   options = options || {}
 
   options.factoryOptions = options.factoryOptions || {}
-  options.spawnOptions = options.spawnOptions || { initOptions: { bits: 1024 } }
+  options.spawnOptions = options.spawnOptions || { initOptions: { bits: 1024, profile: 'test' } }
 
   const ipfsFactory = IPFSFactory.create(options.factoryOptions)
 
@@ -23,14 +23,11 @@ function createFactory (options) {
       setup = (callback) => {
         callback(null, {
           spawnNode (cb) {
-            ipfsFactory.spawn(options.spawnOptions, (err, _ipfsd) => {
-              if (err) {
-                return cb(err)
-              }
-
-              nodes.push(_ipfsd)
-              cb(null, IPFSApi(_ipfsd.apiAddr))
-            })
+            ipfsFactory.spawn(options.spawnOptions)
+              .then((ipfsd) => {
+                nodes.push(ipfsd)
+                cb(null, ipfsClient(ipfsd.apiAddr))
+              }, cb)
           }
         })
       }
@@ -39,7 +36,7 @@ function createFactory (options) {
     if (options.createTeardown) {
       teardown = options.createTeardown({ ipfsFactory, nodes }, options)
     } else {
-      teardown = callback => each(nodes, (node, cb) => node.stop(cb), callback)
+      teardown = callback => each(nodes, (node, cb) => node.stop().then(cb, cb), callback)
     }
 
     return { setup, teardown }
